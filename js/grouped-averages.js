@@ -65,9 +65,8 @@ function buildGroupedTableBody(datasets, comparisonMode) {
         const row  = document.createElement('tr');
         const cell = document.createElement('td');
         cell.colSpan   = 2;
-        cell.textContent = comparisonMode === 'roles'
-            ? 'Select roles to see comparison data'
-            : 'Select locations to see comparison data';
+        const emptyLabels = { roles: 'roles', location: 'locations', tenure: 'tenure brackets' };
+        cell.textContent = `Select ${emptyLabels[comparisonMode] || 'items'} to see comparison data`;
         cell.className = 'empty-state';
         row.appendChild(cell);
         tbody.appendChild(row);
@@ -94,7 +93,7 @@ function buildGroupedTableBody(datasets, comparisonMode) {
             cell.textContent = value.toFixed(1);
 
             if (ds.isFiltered) {
-                if (comparisonMode === 'roles' || comparisonMode === 'location') {
+                if (comparisonMode === 'roles' || comparisonMode === 'location' || comparisonMode === 'tenure') {
                     cell.classList.add(getComparisonModeColorClass(value, minValue, maxValue, datasets.length));
                 } else {
                     const baseline = baselineAverages[groupName];
@@ -140,6 +139,15 @@ function updateGroupedAveragesTable(filters = null) {
             datasets = selectedLocations.map(ld => ({
                 name:       ld.displayName,
                 averages:   calculateGroupedAverages(allData.filter(row => row.Location === ld.csvValue)),
+                isFiltered: true,
+            }));
+        }
+    } else if (comparisonMode === 'tenure') {
+        const selectedTenures = window.KPIModule.getSelectedComparisonItems('tenure');
+        if (selectedTenures && selectedTenures.length > 0) {
+            datasets = selectedTenures.map(td => ({
+                name:       td.displayName,
+                averages:   calculateGroupedAverages(allData.filter(row => row.Tenure === td.csvValue)),
                 isFiltered: true,
             }));
         }

@@ -276,8 +276,8 @@ class Charts {
                     },
                     tooltip: config.textCol ? {
                         callbacks: {
-                            title:  () => '',
-                            label:  () => 'Click for additional detail',
+                            title:  () => 'Click for additional detail',
+                            label:  () => '',
                         },
                         displayColors: false,
                     } : { enabled: false },
@@ -382,6 +382,19 @@ class Charts {
             }));
         }
 
+        if (mode === 'tenure') {
+            const selectedTenures = window.KPIModule.getSelectedComparisonItems('tenure');
+            if (!selectedTenures?.length) return [];
+            return selectedTenures.map((td, i) => ({
+                name:       td.displayName,
+                categories: this.getSortedCategories(
+                    this.countCategories(allData.filter(r => r.Tenure === td.csvValue), config.dataCol)
+                ),
+                data:       allData.filter(r => r.Tenure === td.csvValue),
+                color:      this.SERIES_COLORS[i % this.SERIES_COLORS.length],
+            }));
+        }
+
         // Baseline mode
         const filters    = window.UtilsModule.getCurrentFiltersForCsv();
         const hasFilters = (filters.roleMode === 'compare' && filters.selectedRoles?.length > 0) ||
@@ -449,27 +462,54 @@ class Charts {
         const existing = document.getElementById('responses-dialog');
         if (existing) existing.remove();
 
-        const ds        = datasets.find(d => d.name === datasetName) || datasets[0];
-        const responses = this.getResponsesForCategory(ds.data, config.dataCol, config.textCol, category);
-        const catEntry  = ds.categories.find(c => c.label === category);
-        const count     = catEntry ? catEntry.count : responses.length;
-
-        const listHTML = responses.length
-            ? responses.map(r => `<li class="response-item">${r}</li>`).join('')
-            : '<li class="response-item response-empty">No text responses available for this category.</li>';
-
         const dialog   = document.createElement('sl-dialog');
         dialog.id      = 'responses-dialog';
-        dialog.label   = `${category}`;
-        dialog.innerHTML = `
-            <div class="responses-dialog-meta">
-                <strong>${Math.round(count)}</strong> response${Math.round(count) !== 1 ? 's' : ''}
-                in <em>${datasetName}</em>
-            </div>
-            <ul class="responses-list">${listHTML}</ul>
-            <sl-button slot="footer" variant="primary"
-                onclick="document.getElementById('responses-dialog').hide()">Close</sl-button>
-        `;
+        dialog.label   = `Response Details: ${category}`;
+
+        if (datasets.length === 1) {
+            // Single dataset — no tabs needed
+            const ds        = datasets[0];
+            const responses = this.getResponsesForCategory(ds.data, config.dataCol, config.textCol, category);
+            const catEntry  = ds.categories.find(c => c.label === category);
+            const count     = catEntry ? Math.round(catEntry.count) : responses.length;
+
+            const listHTML = responses.length
+                ? responses.map(r => `<div class="response-card">${r}</div>`).join('')
+                : '<div class="response-card response-empty">No text responses available.</div>';
+
+            dialog.innerHTML = `
+                <div class="responses-dialog-meta"><strong>${count}</strong> response${count !== 1 ? 's' : ''}</div>
+                <div class="responses-list">${listHTML}</div>
+                <sl-button slot="footer" variant="primary"
+                    onclick="document.getElementById('responses-dialog').hide()">Close</sl-button>
+            `;
+        } else {
+            // Multiple datasets — use Shoelace tabs
+            const tabsHTML = datasets.map((ds, i) => {
+                const responses = this.getResponsesForCategory(ds.data, config.dataCol, config.textCol, category);
+                const catEntry  = ds.categories.find(c => c.label === category);
+                const count     = catEntry ? Math.round(catEntry.count) : responses.length;
+                const active    = i === 0 ? '' : '';
+                return `<sl-tab slot="nav" panel="ds-${i}">${ds.name} <sl-badge variant="neutral" pill>${count}</sl-badge></sl-tab>`;
+            }).join('');
+
+            const panelsHTML = datasets.map((ds, i) => {
+                const responses = this.getResponsesForCategory(ds.data, config.dataCol, config.textCol, category);
+                const listHTML = responses.length
+                    ? responses.map(r => `<div class="response-card">${r}</div>`).join('')
+                    : '<div class="response-card response-empty">No text responses available.</div>';
+                return `<sl-tab-panel name="ds-${i}"><div class="responses-list">${listHTML}</div></sl-tab-panel>`;
+            }).join('');
+
+            dialog.innerHTML = `
+                <sl-tab-group id="response-tabs">
+                    ${tabsHTML}
+                    ${panelsHTML}
+                </sl-tab-group>
+                <sl-button slot="footer" variant="primary"
+                    onclick="document.getElementById('responses-dialog').hide()">Close</sl-button>
+            `;
+        }
 
         document.body.appendChild(dialog);
         dialog.show();

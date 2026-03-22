@@ -64,6 +64,20 @@ function getSelectedComparisonItems(mode) {
         });
     }
 
+    if (mode === 'tenure') {
+        const tenureSelect = document.getElementById('tenure-comparison-select');
+        if (!tenureSelect?.value?.length) return [];
+
+        return tenureSelect.value.map(value => {
+            const opt      = window.DataModule.TENURE_OPTIONS.find(o => o.value === value);
+            const csvValue = opt ? opt.csvValue : value;
+            const filtered = allData.filter(row => row.Tenure === csvValue);
+            const count    = Math.round(window.CSVLoaderModule.getWeightedCount(filtered));
+            const average  = Math.round(calculateAverageResponse(filtered) * 10) / 10;
+            return { displayName: opt ? opt.text : value, csvValue, count, average, totalAverage };
+        });
+    }
+
     return [];
 }
 
@@ -76,10 +90,12 @@ function getComparisonModeColorClass(value, minValue, maxValue, itemCount) {
 
 function createComparisonModeKPIHTML(mode, items) {
     if (!items || items.length === 0) {
-        return `<div class="kpi-container kpi-comparison-empty">Select ${mode === 'roles' ? 'roles' : 'locations'} to see comparison data</div>`;
+        const labels = { roles: 'roles', location: 'locations', tenure: 'tenure brackets' };
+        return `<div class="kpi-container kpi-comparison-empty">Select ${labels[mode] || 'items'} to see comparison data</div>`;
     }
 
-    const modeLabel = mode === 'roles' ? 'Role' : 'Location';
+    const modeLabels = { roles: 'Role', location: 'Location', tenure: 'Tenure' };
+    const modeLabel  = modeLabels[mode] || 'Comparison';
     const averages  = items.map(i => i.average);
     const minAvg    = Math.min(...averages);
     const maxAvg    = Math.max(...averages);
@@ -223,6 +239,8 @@ function updateKPIDisplay() {
         kpiContainer.innerHTML = createComparisonModeKPIHTML('roles', getSelectedComparisonItems('roles'));
     } else if (mode === 'location') {
         kpiContainer.innerHTML = createComparisonModeKPIHTML('location', getSelectedComparisonItems('location'));
+    } else if (mode === 'tenure') {
+        kpiContainer.innerHTML = createComparisonModeKPIHTML('tenure', getSelectedComparisonItems('tenure'));
     } else {
         kpiContainer.innerHTML = createKPIHTML(getCurrentKPIData());
     }

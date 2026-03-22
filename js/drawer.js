@@ -18,8 +18,8 @@ function setupDrawerFunctionality() {
         }
     });
 
-    drawer.addEventListener('sl-show',       () => { isDrawerOpen = true;  hideButton(); });
-    drawer.addEventListener('sl-after-hide', () => { isDrawerOpen = false; showButton(); });
+    drawer.addEventListener('sl-show',       () => { isDrawerOpen = true;  });
+    drawer.addEventListener('sl-after-hide', () => { isDrawerOpen = false; });
 }
 
 function getCurrentComparisonMode() { return currentComparisonMode; }
@@ -27,11 +27,11 @@ function isDrawerCurrentlyOpen()    { return isDrawerOpen; }
 
 function hideButton() {
     const btn = document.getElementById('survey-filters-btn');
-    if (btn) btn.style.display = 'none';
+    if (btn) btn.classList.add('hidden');
 }
 function showButton() {
     const btn = document.getElementById('survey-filters-btn');
-    if (btn) btn.style.display = '';
+    if (btn) btn.classList.remove('hidden');
 }
 
 function showComparisonMode(mode) {
@@ -40,10 +40,12 @@ function showComparisonMode(mode) {
     const baseline = document.getElementById('baseline-filters-container');
     const roles    = document.getElementById('roles-mode-container');
     const location = document.getElementById('location-mode-container');
+    const tenure   = document.getElementById('tenure-mode-container');
 
     if (baseline) baseline.classList.toggle('hidden', mode !== 'baseline');
     if (roles)    roles.classList.toggle('hidden',    mode !== 'roles');
     if (location) location.classList.toggle('hidden', mode !== 'location');
+    if (tenure)   tenure.classList.toggle('hidden',   mode !== 'tenure');
 
     updateComparisonModeExplanation(mode);
 
@@ -51,8 +53,10 @@ function showComparisonMode(mode) {
     if (mode === 'baseline') {
         const rs = document.getElementById('roles-comparison-select');
         const ls = document.getElementById('locations-comparison-select');
+        const ts = document.getElementById('tenure-comparison-select');
         if (rs) rs.value = [];
         if (ls) ls.value = [];
+        if (ts) ts.value = [];
     }
 
     if (window.KPIModule)                         window.KPIModule.updateKPIDisplay();
@@ -69,6 +73,7 @@ function updateComparisonModeExplanation(mode) {
         baseline: 'Compare company-wide SteelFab VA results to a smaller section filtered by role, location, or tenure.',
         roles:    'Select two or more roles to compare their survey results side by side.',
         location: 'Select locations to compare their survey results side by side.',
+        tenure:   'Select tenure brackets to compare their survey results side by side.',
     };
     el.textContent = texts[mode] || texts.baseline;
 }
@@ -82,27 +87,21 @@ function setupComparisonModeToggle() {
     });
 }
 
+function refreshAllDisplays() {
+    if (window.KPIModule)                     window.KPIModule.updateKPIDisplay();
+    if (window.updateGroupedAveragesTable)     window.updateGroupedAveragesTable();
+    if (window.updateIndividualQuestionsTable) window.updateIndividualQuestionsTable();
+    if (window.charts)                         window.charts.updateCharts();
+}
+
 function setupComparisonModeAlerts() {
     const rolesSelect     = document.getElementById('roles-comparison-select');
     const locationsSelect = document.getElementById('locations-comparison-select');
+    const tenureSelect    = document.getElementById('tenure-comparison-select');
 
-    if (rolesSelect) {
-        rolesSelect.addEventListener('sl-change', () => {
-            if (window.KPIModule)                     window.KPIModule.updateKPIDisplay();
-            if (window.updateGroupedAveragesTable)     window.updateGroupedAveragesTable();
-            if (window.updateIndividualQuestionsTable) window.updateIndividualQuestionsTable();
-            if (window.charts)                         window.charts.updateCharts();
-        });
-    }
-
-    if (locationsSelect) {
-        locationsSelect.addEventListener('sl-change', () => {
-            if (window.KPIModule)                     window.KPIModule.updateKPIDisplay();
-            if (window.updateGroupedAveragesTable)     window.updateGroupedAveragesTable();
-            if (window.updateIndividualQuestionsTable) window.updateIndividualQuestionsTable();
-            if (window.charts)                         window.charts.updateCharts();
-        });
-    }
+    if (rolesSelect)     rolesSelect.addEventListener('sl-change', refreshAllDisplays);
+    if (locationsSelect) locationsSelect.addEventListener('sl-change', refreshAllDisplays);
+    if (tenureSelect)    tenureSelect.addEventListener('sl-change', refreshAllDisplays);
 }
 
 function setupDrawerAll() {

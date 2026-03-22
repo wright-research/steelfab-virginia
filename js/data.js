@@ -12,17 +12,17 @@ const ROLE_OPTIONS = [
     { value: 'machine-operator',      text: 'Machine Operator',      csvValue: 'Machine operator' },
     { value: 'maintenance',           text: 'Maintenance',           csvValue: 'Maintenance' },
     { value: 'painter',               text: 'Painter',               csvValue: 'Painter' },
+    { value: 'parts-puller',          text: 'Parts Puller',          csvValue: 'Parts Puller' },
     { value: 'programmer',            text: 'Programmer',            csvValue: 'Programmer' },
     { value: 'quality-control',       text: 'Quality Control',       csvValue: 'Quality control' },
     { value: 'welder',                text: 'Welder',                csvValue: 'Welder' },
-    { value: 'parts-puller',          text: 'Parts Puller',          csvValue: 'Parts Puller' },
     { value: 'other',                 text: 'Other',                 csvValue: 'Other' },
 ];
 
 const LOCATION_OPTIONS = [
-    { value: 'virginia-emporia',      text: 'Virginia – Emporia Shop',          csvValue: 'Virginia - Emporia Shop' },
-    { value: 'nc-fayetteville',       text: 'North Carolina – Fayetteville Shop', csvValue: 'North Carolina - Fayetteville Shop' },
     { value: 'al-roanoke',            text: 'Alabama – Roanoke Shop',           csvValue: 'Alabama - Roanoke Shop' },
+    { value: 'nc-fayetteville',       text: 'North Carolina – Fayetteville Shop', csvValue: 'North Carolina - Fayetteville Shop' },
+    { value: 'virginia-emporia',      text: 'Virginia – Emporia Shop',          csvValue: 'Virginia - Emporia Shop' },
 ];
 
 const TENURE_OPTIONS = [

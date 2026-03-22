@@ -11,7 +11,6 @@
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
@@ -28,7 +27,7 @@
         </div>
 
         <h1>SteelFab Virginia Shop Survey Results</h1>
-        <h2>Emporia Plant &mdash; 2026</h2>
+        <h2>2026</h2>
 
         <!-- Filter Status Display -->
         <div id="filter-status" class="filter-status hidden">
@@ -109,6 +108,16 @@
                 </button>
             </div>
 
+            <!-- ── Value follow-up ──────────────────────────────────────── -->
+            <div class="chart-item">
+                <h3 class="chart-title">Why is this SteelFab value most important to you?</h3>
+                <p class="chart-subtitle">Follow-up to: "Which SteelFab value is most important to you?"</p>
+                <div class="chart-wrapper" id="wrapper-chart-value-why">
+                    <canvas id="chart-value-why" class="chart-canvas"></canvas>
+                </div>
+                <button class="chart-toggle-btn" id="toggle-chart-value-why" style="display:none;">Show all categories</button>
+            </div>
+
             <!-- ── Open-ended questions ──────────────────────────────────── -->
             <div class="chart-item">
                 <h3 class="chart-title">What do you enjoy most about your job at SteelFab?</h3>
@@ -124,14 +133,6 @@
                     <canvas id="chart-enjoy-least" class="chart-canvas"></canvas>
                 </div>
                 <button class="chart-toggle-btn" id="toggle-chart-enjoy-least" style="display:none;">Show all categories</button>
-            </div>
-
-            <div class="chart-item">
-                <h3 class="chart-title">(Optional) What one or two things would you change about your work experience at SteelFab?</h3>
-                <div class="chart-wrapper" id="wrapper-chart-would-change">
-                    <canvas id="chart-would-change" class="chart-canvas"></canvas>
-                </div>
-                <button class="chart-toggle-btn" id="toggle-chart-would-change" style="display:none;">Show all categories</button>
             </div>
 
             <div class="chart-item">
@@ -187,12 +188,11 @@
             </div>
 
             <div class="chart-item">
-                <h3 class="chart-title">Why is this SteelFab value most important to you?</h3>
-                <p class="chart-subtitle">Follow-up to: "Which SteelFab value is most important to you?"</p>
-                <div class="chart-wrapper" id="wrapper-chart-value-why">
-                    <canvas id="chart-value-why" class="chart-canvas"></canvas>
+                <h3 class="chart-title">(Optional) What one or two things would you change about your work experience at SteelFab?</h3>
+                <div class="chart-wrapper" id="wrapper-chart-would-change">
+                    <canvas id="chart-would-change" class="chart-canvas"></canvas>
                 </div>
-                <button class="chart-toggle-btn" id="toggle-chart-value-why" style="display:none;">Show all categories</button>
+                <button class="chart-toggle-btn" id="toggle-chart-would-change" style="display:none;">Show all categories</button>
             </div>
 
         </div>
@@ -211,6 +211,7 @@
                             <sl-radio-button value="baseline">Baseline</sl-radio-button>
                             <sl-radio-button value="roles">Roles</sl-radio-button>
                             <sl-radio-button value="location">Location</sl-radio-button>
+                            <sl-radio-button value="tenure">Tenure</sl-radio-button>
                         </sl-radio-group>
                     </div>
                     <div class="comparison-mode-explanation">
@@ -290,10 +291,10 @@
                             <sl-option value="machine-operator">Machine Operator</sl-option>
                             <sl-option value="maintenance">Maintenance</sl-option>
                             <sl-option value="painter">Painter</sl-option>
+                            <sl-option value="parts-puller">Parts Puller</sl-option>
                             <sl-option value="programmer">Programmer</sl-option>
                             <sl-option value="quality-control">Quality Control</sl-option>
                             <sl-option value="welder">Welder</sl-option>
-                            <sl-option value="parts-puller">Parts Puller</sl-option>
                             <sl-option value="other">Other</sl-option>
                         </sl-select>
                     </div>
@@ -304,9 +305,22 @@
                     <div class="comparison-select-content">
                         <sl-select placeholder="Choose locations to compare" multiple clearable
                             max-options-visible="3" id="locations-comparison-select">
-                            <sl-option value="virginia-emporia">Virginia – Emporia Shop</sl-option>
-                            <sl-option value="nc-fayetteville">North Carolina – Fayetteville Shop</sl-option>
                             <sl-option value="al-roanoke">Alabama – Roanoke Shop</sl-option>
+                            <sl-option value="nc-fayetteville">North Carolina – Fayetteville Shop</sl-option>
+                            <sl-option value="virginia-emporia">Virginia – Emporia Shop</sl-option>
+                        </sl-select>
+                    </div>
+                </div>
+
+                <!-- Tenure Comparison Mode -->
+                <div class="tenure-mode-container hidden" id="tenure-mode-container">
+                    <div class="comparison-select-content">
+                        <sl-select placeholder="Choose tenure brackets to compare" multiple clearable
+                            max-options-visible="4" id="tenure-comparison-select">
+                            <sl-option value="less-than-1">Less than 1 year</sl-option>
+                            <sl-option value="1-3-years">1–3 years</sl-option>
+                            <sl-option value="4-6-years">4–6 years</sl-option>
+                            <sl-option value="7-plus-years">7+ years</sl-option>
                         </sl-select>
                     </div>
                 </div>

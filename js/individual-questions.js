@@ -39,7 +39,7 @@ function calculateAllQuestionAverages(data) {
 }
 
 function getScoreColorClass(value, comparisonValue, mode, minVal, maxVal, itemCount) {
-    if (mode === 'roles' || mode === 'location') {
+    if (mode === 'roles' || mode === 'location' || mode === 'tenure') {
         if (itemCount <= 1) return 'score-neutral';
         if (value === maxVal) return 'score-green';
         if (value === minVal) return 'score-red';
@@ -85,9 +85,8 @@ function buildTableBody(datasets, comparisonMode) {
         const row  = document.createElement('tr');
         const cell = document.createElement('td');
         cell.colSpan     = 3;
-        cell.textContent = comparisonMode === 'roles'
-            ? 'Select roles to see comparison data'
-            : 'Select locations to see comparison data';
+        const emptyLabels = { roles: 'roles', location: 'locations', tenure: 'tenure brackets' };
+        cell.textContent = `Select ${emptyLabels[comparisonMode] || 'items'} to see comparison data`;
         cell.className   = 'empty-state';
         row.appendChild(cell);
         tbody.appendChild(row);
@@ -177,6 +176,15 @@ function updateIndividualQuestionsTable(filters = null) {
             datasets = selectedLocations.map(ld => ({
                 name:       ld.displayName,
                 averages:   calculateAllQuestionAverages(allData.filter(row => row.Location === ld.csvValue)),
+                isFiltered: true,
+            }));
+        }
+    } else if (comparisonMode === 'tenure') {
+        const selectedTenures = window.KPIModule.getSelectedComparisonItems('tenure');
+        if (selectedTenures && selectedTenures.length > 0) {
+            datasets = selectedTenures.map(td => ({
+                name:       td.displayName,
+                averages:   calculateAllQuestionAverages(allData.filter(row => row.Tenure === td.csvValue)),
                 isFiltered: true,
             }));
         }
