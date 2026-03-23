@@ -30,6 +30,13 @@ class Charts {
                 title:     'Which SteelFab value is most important to you?',
                 dataCol:   'Q40',
                 textCol:   null,
+                noToggle:  true,
+                // Clicking a value bar opens a drill-down chart of Q41 filtered to that value
+                drilldown: {
+                    filterCol: 'Q40',
+                    dataCol:   'Q_value_why_cat',
+                    textCol:   'Q41',
+                },
             },
             // ── Open-ended questions ─────────────────────────────────────────
             {
@@ -104,14 +111,6 @@ class Charts {
                 title:     'Why are you satisfied or not with SteelFab\'s compensation and wages?',
                 dataCol:   'Q_compensation_why_cat',
                 textCol:   'Q37',
-            },
-            {
-                id:        'chart-value-why',
-                wrapperId: 'wrapper-chart-value-why',
-                toggleId:  'toggle-chart-value-why',
-                title:     'Why is this SteelFab value most important to you?',
-                dataCol:   'Q_value_why_cat',
-                textCol:   'Q41',
             },
         ];
 
@@ -206,7 +205,7 @@ class Charts {
                 hoverBackgroundColor: ds.hoverColor || this.darken(ds.color || this.BASELINE_COLOR, 0.15),
                 borderColor:     '#1c1c1c',
                 borderWidth:     1,
-                barPercentage:   0.75,
+                barPercentage:   0.55,
                 categoryPercentage: 0.85,
             };
         });
@@ -257,19 +256,27 @@ class Charts {
                 maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false, axis: 'y' },
                 onClick: (evt, elements, chart) => {
-                    if (!config.textCol) return;
+                    if (!config.textCol && !config.drilldown) return;
                     // Explicitly get elements at click position to avoid first-click miss
                     const points = elements.length ? elements
                         : chart.getElementsAtEventForMode(evt, 'index', { intersect: false, axis: 'y' }, false);
                     if (!points.length) return;
                     const labelIdx = points[0].index;
-                    const dsIdx    = points[0].datasetIndex;
                     const category = displayLabels[labelIdx];
-                    const dsName   = datasets[dsIdx].name;
-                    this.showResponsesDialog(config, category, dsName, datasets);
+                    if (config.drilldown) {
+                        this.showDrilldownDialog(config, category, datasets);
+                    } else {
+                        const dsName = datasets[points[0].datasetIndex].name;
+                        this.showResponsesDialog(config, category, dsName, datasets);
+                    }
                 },
-                onHover: (evt, elements) => {
-                    evt.native.target.style.cursor = elements.length && config.textCol ? 'pointer' : 'default';
+                onHover: (evt, elements, chart) => {
+                    const newIndex = elements.length ? elements[0].index : null;
+                    if (chart._hoveredIndex !== newIndex) {
+                        chart._hoveredIndex = newIndex;
+                        chart.update('none');
+                    }
+                    evt.native.target.style.cursor = elements.length && (config.textCol || config.drilldown) ? 'pointer' : 'default';
                 },
                 plugins: {
                     legend: {
@@ -283,10 +290,10 @@ class Charts {
                             pointStyle: 'rect',
                         },
                     },
-                    tooltip: config.textCol ? {
+                    tooltip: (config.textCol || config.drilldown) ? {
                         position: 'cursor',
                         callbacks: {
-                            title:  () => 'Click for additional detail',
+                            title:  () => config.drilldown ? 'Click to see why' : 'Click for text responses',
                             label:  () => '',
                         },
                         displayColors: false,
@@ -311,16 +318,42 @@ class Charts {
                     y: {
                         ticks: {
                             color: '#1c1c1c',
-                            font: { size: 12 },
+                            font: (ctx) => ({
+                                size:   14,
+                                weight: ctx.chart._hoveredIndex === ctx.index ? 'bold' : 'normal',
+                            }),
                             autoSkip: false,
                         },
                         grid: { display: false },
+                        afterFit: (scale) => {
+                            const ctx = scale.ctx;
+                            ctx.save();
+                            ctx.font = `bold 14px ${Chart.defaults.font.family || 'sans-serif'}`;
+                            let maxW = 0;
+                            scale.ticks.forEach(tick => {
+                                const lines = Array.isArray(tick.label) ? tick.label : [String(tick.label ?? '')];
+                                lines.forEach(line => { maxW = Math.max(maxW, ctx.measureText(line).width); });
+                            });
+                            ctx.restore();
+                            scale.width = Math.max(scale.width, Math.ceil(maxW) + 20);
+                        },
                     },
                 },
             },
         });
 
         this.updateToggleButton(config, allLabels.length);
+
+        // Reset bold label when mouse leaves the chart canvas
+        if (canvas._mlHandler) canvas.removeEventListener('mouseleave', canvas._mlHandler);
+        canvas._mlHandler = () => {
+            const c = this.chartInstances[config.id];
+            if (c && c._hoveredIndex !== null) {
+                c._hoveredIndex = null;
+                c.update('none');
+            }
+        };
+        canvas.addEventListener('mouseleave', canvas._mlHandler);
     }
 
     // Darken a hex color by a factor (0–1)
@@ -338,6 +371,11 @@ class Charts {
     updateToggleButton(config, totalCategories) {
         const btn = document.getElementById(config.toggleId);
         if (!btn) return;
+
+        if (config.noToggle) {
+            btn.style.display = 'none';
+            return;
+        }
 
         if (totalCategories > this.TOP_N) {
             const isExpanded  = this.expandedCharts.has(config.id);
@@ -525,6 +563,213 @@ class Charts {
             dialog.show();
         });
         dialog.addEventListener('sl-after-hide', () => dialog.remove());
+    }
+
+    // ── Drilldown dialog (values chart → why chart) ───────────────────────────
+
+    showDrilldownDialog(config, filterValue, datasets) {
+        const drilldown = config.drilldown;
+
+        // Filter each dataset to rows where Q40 === filterValue, then count Q_value_why_cat
+        const drillDatasets = datasets
+            .map(ds => ({
+                name:       ds.name,
+                categories: this.getSortedCategories(
+                    this.countCategories(
+                        ds.data.filter(row => row[drilldown.filterCol] === filterValue),
+                        drilldown.dataCol
+                    )
+                ),
+                data:  ds.data.filter(row => row[drilldown.filterCol] === filterValue),
+                color: ds.color,
+            }))
+            .filter(ds => ds.categories.length > 0);
+
+        const existing = document.getElementById('drilldown-dialog');
+        if (existing) existing.remove();
+
+        const dialog   = document.createElement('sl-dialog');
+        dialog.id      = 'drilldown-dialog';
+        dialog.label   = `Why "${filterValue}"?`;
+        dialog.innerHTML = `
+            <p class="drilldown-dialog-subtitle">
+                Why respondents chose <strong>${filterValue}</strong> as their most important value.
+                Click any bar to read the individual responses.
+            </p>
+            <div class="drilldown-chart-wrapper" id="drilldown-chart-wrapper">
+                <canvas id="drilldown-chart-canvas"></canvas>
+            </div>
+            <sl-button slot="footer" variant="primary"
+                onclick="document.getElementById('drilldown-dialog').hide()">Close</sl-button>
+        `;
+
+        document.body.appendChild(dialog);
+
+        customElements.whenDefined('sl-dialog').then(() => {
+            dialog.show();
+            dialog.addEventListener('sl-after-show', () => {
+                this.renderDrilldownChart(drilldown, drillDatasets);
+            }, { once: true });
+        });
+
+        dialog.addEventListener('sl-after-hide', () => {
+            if (this.chartInstances['__drilldown__']) {
+                this.chartInstances['__drilldown__'].destroy();
+                delete this.chartInstances['__drilldown__'];
+            }
+            dialog.remove();
+        });
+    }
+
+    renderDrilldownChart(drilldown, drillDatasets) {
+        const canvas = document.getElementById('drilldown-chart-canvas');
+        if (!canvas) return;
+
+        if (!drillDatasets.length) {
+            const wrapper = document.getElementById('drilldown-chart-wrapper');
+            if (wrapper) wrapper.innerHTML = '<p class="drilldown-no-data">No responses available for this value.</p>';
+            return;
+        }
+
+        // Collect and rank labels across all datasets
+        const allLabels = [];
+        drillDatasets.forEach(ds => {
+            ds.categories.forEach(c => {
+                if (!allLabels.includes(c.label)) allLabels.push(c.label);
+            });
+        });
+        const primaryCounts = {};
+        drillDatasets[0].categories.forEach(c => { primaryCounts[c.label] = c.count; });
+        allLabels.sort((a, b) => (primaryCounts[b] || 0) - (primaryCounts[a] || 0));
+
+        // Convert counts → percentages
+        const chartDatasets = drillDatasets.map(ds => {
+            const total = ds.categories.reduce((sum, c) => sum + c.count, 0);
+            return {
+                label:                ds.name,
+                data:                 allLabels.map(l => {
+                    const found = ds.categories.find(c => c.label === l);
+                    const count = found ? found.count : 0;
+                    return total > 0 ? Math.round((count / total) * 1000) / 10 : 0;
+                }),
+                backgroundColor:      ds.color || this.BASELINE_COLOR,
+                hoverBackgroundColor: this.darken(ds.color || this.BASELINE_COLOR, 0.15),
+                borderColor:          '#1c1c1c',
+                borderWidth:          1,
+                barPercentage:        0.75,
+                categoryPercentage:   0.85,
+            };
+        });
+
+        const brokenLabels = allLabels.map(l => this.breakLabel(l));
+        const numDatasets  = chartDatasets.length;
+        const barHeight    = 22;
+        const categoryPad  = 8;
+        const perCategory  = (barHeight * numDatasets) + categoryPad;
+        const legendPad    = numDatasets > 1 ? 50 : 20;
+        const height       = Math.max(150, allLabels.length * perCategory + legendPad + 40);
+
+        const wrapper = document.getElementById('drilldown-chart-wrapper');
+        if (wrapper) wrapper.style.height = height + 'px';
+
+        // Proxy config so showResponsesDialog retrieves Q41 text responses
+        const proxyConfig = { dataCol: drilldown.dataCol, textCol: drilldown.textCol };
+
+        this.chartInstances['__drilldown__'] = new Chart(canvas, {
+            type: 'bar',
+            data: { labels: brokenLabels, datasets: chartDatasets },
+            options: {
+                indexAxis:  'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false, axis: 'y' },
+                onClick: (evt, elements, chart) => {
+                    const points = elements.length ? elements
+                        : chart.getElementsAtEventForMode(evt, 'index', { intersect: false, axis: 'y' }, false);
+                    if (!points.length) return;
+                    const category = allLabels[points[0].index];
+                    const dsName   = drillDatasets[points[0].datasetIndex].name;
+                    this.showResponsesDialog(proxyConfig, category, dsName, drillDatasets);
+                },
+                onHover: (evt, elements, chart) => {
+                    const newIndex = elements.length ? elements[0].index : null;
+                    if (chart._hoveredIndex !== newIndex) {
+                        chart._hoveredIndex = newIndex;
+                        chart.update('none');
+                    }
+                    evt.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+                },
+                plugins: {
+                    legend: {
+                        display:  drillDatasets.length > 1,
+                        position: 'top',
+                        labels: {
+                            color: '#1c1c1c',
+                            font:  { size: 12, weight: 500 },
+                            padding: 15,
+                            usePointStyle: true,
+                            pointStyle:    'rect',
+                        },
+                    },
+                    tooltip: {
+                        position: 'cursor',
+                        callbacks: {
+                            title:  () => 'Click for text responses',
+                            label:  () => '',
+                        },
+                        displayColors: false,
+                    },
+                    datalabels: false,
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text:    'Percent of Total',
+                            color:   '#1c1c1c',
+                            font:    { size: 13, weight: 500 },
+                        },
+                        ticks: { color: '#1c1c1c', callback: value => value + '%' },
+                        grid:  { color: '#e0e0e0' },
+                    },
+                    y: {
+                        ticks: {
+                            color: '#1c1c1c',
+                            font: (ctx) => ({
+                                size:   14,
+                                weight: ctx.chart._hoveredIndex === ctx.index ? 'bold' : 'normal',
+                            }),
+                            autoSkip: false,
+                        },
+                        grid: { display: false },
+                        afterFit: (scale) => {
+                            const ctx = scale.ctx;
+                            ctx.save();
+                            ctx.font = `bold 14px ${Chart.defaults.font.family || 'sans-serif'}`;
+                            let maxW = 0;
+                            scale.ticks.forEach(tick => {
+                                const lines = Array.isArray(tick.label) ? tick.label : [String(tick.label ?? '')];
+                                lines.forEach(line => { maxW = Math.max(maxW, ctx.measureText(line).width); });
+                            });
+                            ctx.restore();
+                            scale.width = Math.max(scale.width, Math.ceil(maxW) + 20);
+                        },
+                    },
+                },
+            },
+        });
+
+        // Reset bold label when mouse leaves the drilldown chart canvas
+        if (canvas._mlHandler) canvas.removeEventListener('mouseleave', canvas._mlHandler);
+        canvas._mlHandler = () => {
+            const c = this.chartInstances['__drilldown__'];
+            if (c && c._hoveredIndex !== null) {
+                c._hoveredIndex = null;
+                c.update('none');
+            }
+        };
+        canvas.addEventListener('mouseleave', canvas._mlHandler);
     }
 }
 

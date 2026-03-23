@@ -1763,6 +1763,35 @@ sl-select::part(form-control-label) {
     --width: min(720px, 90vw);
 }
 
+#drilldown-dialog {
+    --sl-panel-background-color: #ffffff;
+    --width: min(720px, 90vw);
+}
+
+#drilldown-dialog::part(title) {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.drilldown-dialog-subtitle {
+    font-size: 0.88rem;
+    color: #555;
+    margin: 0 0 1rem 0;
+    line-height: 1.4;
+}
+
+.drilldown-chart-wrapper {
+    position: relative;
+    min-height: 150px;
+}
+
+.drilldown-no-data {
+    color: #999;
+    font-style: italic;
+    font-size: 0.9rem;
+    padding: 1rem 0;
+}
+
 #responses-dialog::part(title) {
     font-size: 1.2rem;
     font-weight: 600;
