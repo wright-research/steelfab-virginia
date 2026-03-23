@@ -5,11 +5,16 @@
  * Click any bar to see individual responses.
  */
 
+// Custom positioner so tooltips follow the cursor instead of anchoring to the bar end
+Chart.Tooltip.positioners.cursor = function(_elements, eventPosition) {
+    return { x: eventPosition.x, y: eventPosition.y };
+};
+
 class Charts {
     constructor() {
         this.chartInstances = {};
-        this.expandedCharts = new Set();
-        this.TOP_N = 5;
+        this.expandedCharts = new Set(['chart-values']);
+        this.TOP_N = 3;
 
         /**
          * Each config entry maps a chart canvas id → the _cat column in the CSV
@@ -279,6 +284,7 @@ class Charts {
                         },
                     },
                     tooltip: config.textCol ? {
+                        position: 'cursor',
                         callbacks: {
                             title:  () => 'Click for additional detail',
                             label:  () => '',

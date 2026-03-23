@@ -241,7 +241,7 @@ function updateIndividualQuestionsTable(filters = null) {
         const footnote = document.createElement('p');
         footnote.id = 'reverse-scored-footnote';
         footnote.className = 'reverse-scored-footnote';
-        footnote.textContent = '* Reverse scored: For these questions, a higher score means less anxiety or overwhelm — the original scale is flipped so that higher is always better.';
+        footnote.textContent = '* Reverse scored: For these questions, a higher score means less anxiety or stress — the original scale is flipped so that higher is always better.';
         container.appendChild(footnote);
     }
 }

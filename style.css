@@ -1543,17 +1543,17 @@ sl-select::part(form-control-label) {
         max-width: none;
     }
 
-    /* Fixed column widths on mobile: category ~27%, question ~48%, score ~25% */
+    /* Fixed column widths on mobile: category ~32%, question ~43%, score ~25% */
     .individual-questions-table th:first-child,
     .individual-questions-table td:first-child {
-        width: 27%;
+        width: 32%;
         min-width: 0;
         white-space: normal;
     }
 
     .individual-questions-table th:nth-child(2),
     .individual-questions-table td:nth-child(2) {
-        width: 48%;
+        width: 43%;
         min-width: 0;
     }
 
@@ -1582,8 +1582,11 @@ sl-select::part(form-control-label) {
     font-size: 0.82rem;
     color: #666;
     font-style: italic;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    padding: 0.75rem 1rem 0.5rem 1rem;
+    padding: 0.75rem 1rem;
     margin: 0;
 }
 
@@ -1723,6 +1726,7 @@ sl-select::part(form-control-label) {
 /* ── Responses dialog ────────────────────────────────────────────── */
 #responses-dialog {
     --sl-panel-background-color: #ffffff;
+    --width: min(720px, 90vw);
 }
 
 #responses-dialog::part(title) {
@@ -1740,7 +1744,7 @@ sl-select::part(form-control-label) {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    max-height: 420px;
+    height: 420px;
     overflow-y: auto;
     padding: 0.25rem 0;
 }
