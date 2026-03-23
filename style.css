@@ -1326,8 +1326,13 @@ sl-select::part(form-control-label) {
         padding: 0.5rem 0.3rem;
     }
 
+    /*
+     * Score column headers: same across-the-board fix as individual-questions —
+     * any dynamic name (role, location, tenure) renders on one line.
+     */
     .grouped-averages-table th.group-header {
-        min-width: 60px;
+        white-space: nowrap;
+        min-width: 54px;
     }
 
     .grouped-averages-table th:first-child {
@@ -1522,45 +1527,74 @@ sl-select::part(form-control-label) {
 
     .individual-questions-table {
         font-size: 0.68rem;
-        table-layout: fixed;
         width: 100%;
     }
 
     .individual-questions-table th,
     .individual-questions-table td {
-        padding: 0.35rem 0.2rem;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
+        padding: 0.35rem 0.3rem;
     }
 
-    /* Remove sticky on mobile so scores are reachable by scrolling */
-    .individual-questions-table th:first-child,
-    .individual-questions-table th:nth-child(2),
-    .individual-questions-table td.question-category,
-    .individual-questions-table td.question-text {
-        position: static;
-        left: auto;
-        max-width: none;
-    }
-
-    /* Fixed column widths on mobile: category ~32%, question ~43%, score ~25% */
-    .individual-questions-table th:first-child,
-    .individual-questions-table td:first-child {
-        width: 32%;
-        min-width: 0;
+    /*
+     * Column 1 header: keep "CATEGORY" horizontal. Width must accommodate the
+     * full word — this also sets the column width that all cells below must share.
+     */
+    .individual-questions-table th:first-child {
+        width: 72px;
+        min-width: 72px;
+        max-width: 72px;
         white-space: normal;
+        word-break: break-word;
+        position: sticky;
+        left: 0;
     }
 
+    /*
+     * Column 1 data cells: rotate bottom-to-top so any label — including
+     * "Relationships" — fits without word-breaking. This is exactly 180° from
+     * the previous top-to-bottom orientation: writing-mode: vertical-rl alone
+     * reads top-down; adding transform: rotate(180deg) flips it to read bottom-up.
+     */
+    .individual-questions-table td.question-category {
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        transform: rotate(180deg);
+        white-space: nowrap;
+        width: 72px;
+        min-width: 72px;
+        max-width: 72px;
+        padding: 0.5rem 0.1rem;
+        text-align: center;
+        position: sticky;
+        left: 0;
+    }
+
+    /*
+     * Column 2 (Question): sticky left must equal column 1's fixed width exactly.
+     * Using a class selector (not :nth-child) ensures rowspan rows where
+     * td:first-child IS the question cell also get the correct left offset.
+     */
     .individual-questions-table th:nth-child(2),
-    .individual-questions-table td:nth-child(2) {
-        width: 43%;
-        min-width: 0;
+    .individual-questions-table td.question-text {
+        min-width: 140px;
+        max-width: none;
+        position: sticky;
+        left: 72px;
     }
 
-    .individual-questions-table th:nth-child(n+3),
+    /*
+     * Score columns (3rd+): never allow header text to word-break.
+     * Since the wrapper scrolls horizontally, columns can be as wide as needed.
+     * This is the across-the-board fix — any role, location, or tenure name
+     * will render on a single line regardless of length.
+     */
+    .individual-questions-table th:nth-child(n+3) {
+        white-space: nowrap;
+        min-width: 54px;
+    }
+
     .individual-questions-table td:nth-child(n+3) {
-        width: 25%;
-        min-width: 0;
+        min-width: 54px;
     }
 
     .individual-questions-table td.question-category {
