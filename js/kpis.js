@@ -106,7 +106,7 @@ function createComparisonModeKPIHTML(mode, items) {
             <div class="kpi-value">${item.count}</div>
             <div class="kpi-label">Responses</div>
             <div class="kpi-value ${getComparisonModeColorClass(item.average, minAvg, maxAvg, items.length)}">${item.average}</div>
-            <div class="kpi-label">Avg THRIVE Score (0–100)</div>
+            <div class="kpi-label">Avg THRIVE Score<br>(0–100)</div>
         </div>
     `).join('');
 
@@ -182,7 +182,7 @@ function createKPIHTML(kpiData) {
                         </div>
                         <div class="kpi-card">
                             <div class="kpi-value">${averageResponse}</div>
-                            <div class="kpi-label">Avg THRIVE Score (0–100)</div>
+                            <div class="kpi-label">Avg THRIVE Score<br>(0–100)</div>
                         </div>
                         <div class="kpi-card">
                             <div class="kpi-value">${satisfactionAvg}</div>
@@ -199,7 +199,7 @@ function createKPIHTML(kpiData) {
                         </div>
                         <div class="kpi-card">
                             <div class="kpi-value ${getAverageScoreColorClass(averageFilteredResponse, averageResponse)}">${averageFilteredResponse}</div>
-                            <div class="kpi-label">Avg THRIVE Score (0–100)</div>
+                            <div class="kpi-label">Avg THRIVE Score<br>(0–100)</div>
                         </div>
                         <div class="kpi-card">
                             <div class="kpi-value ${getAverageScoreColorClass(filteredSatisfactionAvg, satisfactionAvg)}">${filteredSatisfactionAvg}</div>
@@ -219,7 +219,7 @@ function createKPIHTML(kpiData) {
             </div>
             <div class="kpi-card">
                 <div class="kpi-value">${averageResponse}</div>
-                <div class="kpi-label">Avg THRIVE Score (0–100)</div>
+                <div class="kpi-label">Avg THRIVE Score<br>(0–100)</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-value">${satisfactionAvg}</div>
