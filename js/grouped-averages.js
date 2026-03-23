@@ -82,19 +82,20 @@ function buildGroupedTableBody(datasets, comparisonMode) {
         groupCell.textContent = groupName;
         row.appendChild(groupCell);
 
-        const rowValues = datasets.map(ds => ds.averages[groupName]);
+        const rowValues = datasets.map(ds => parseFloat(ds.averages[groupName].toFixed(1)));
         const minValue  = Math.min(...rowValues);
         const maxValue  = Math.max(...rowValues);
 
-        datasets.forEach(ds => {
-            const cell  = document.createElement('td');
-            cell.className = 'group-average';
-            const value = ds.averages[groupName];
-            cell.textContent = value.toFixed(1);
+        datasets.forEach((ds, idx) => {
+            const cell         = document.createElement('td');
+            cell.className     = 'group-average';
+            const value        = ds.averages[groupName];
+            const roundedValue = rowValues[idx];
+            cell.textContent   = value.toFixed(1);
 
             if (ds.isFiltered) {
                 if (comparisonMode === 'roles' || comparisonMode === 'location' || comparisonMode === 'tenure') {
-                    cell.classList.add(getComparisonModeColorClass(value, minValue, maxValue, datasets.length));
+                    cell.classList.add(getComparisonModeColorClass(roundedValue, minValue, maxValue, datasets.length));
                 } else {
                     const baseline = baselineAverages[groupName];
                     if (value > baseline)      cell.classList.add('score-green');
