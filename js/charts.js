@@ -251,10 +251,14 @@ class Charts {
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false, axis: 'y' },
-                onClick: (evt, elements) => {
-                    if (!elements.length || !config.textCol) return;
-                    const labelIdx = elements[0].index;
-                    const dsIdx    = elements[0].datasetIndex;
+                onClick: (evt, elements, chart) => {
+                    if (!config.textCol) return;
+                    // Explicitly get elements at click position to avoid first-click miss
+                    const points = elements.length ? elements
+                        : chart.getElementsAtEventForMode(evt, 'index', { intersect: false, axis: 'y' }, false);
+                    if (!points.length) return;
+                    const labelIdx = points[0].index;
+                    const dsIdx    = points[0].datasetIndex;
                     const category = displayLabels[labelIdx];
                     const dsName   = datasets[dsIdx].name;
                     this.showResponsesDialog(config, category, dsName, datasets);
@@ -512,7 +516,9 @@ class Charts {
         }
 
         document.body.appendChild(dialog);
-        dialog.show();
+        customElements.whenDefined('sl-dialog').then(() => {
+            dialog.show();
+        });
         dialog.addEventListener('sl-after-hide', () => dialog.remove());
     }
 }
