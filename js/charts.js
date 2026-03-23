@@ -497,8 +497,7 @@ class Charts {
             // Multiple datasets — use Shoelace tabs
             const tabsHTML = datasets.map((ds, i) => {
                 const responses = this.getResponsesForCategory(ds.data, config.dataCol, config.textCol, category);
-                const catEntry  = ds.categories.find(c => c.label === category);
-                const count     = catEntry ? Math.round(catEntry.count) : responses.length;
+                const count     = responses.length;
                 const active    = i === 0 ? '' : '';
                 return `<sl-tab slot="nav" panel="ds-${i}">${ds.name} <sl-badge variant="neutral" pill>${count}</sl-badge></sl-tab>`;
             }).join('');
