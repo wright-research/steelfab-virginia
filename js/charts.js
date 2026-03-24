@@ -172,7 +172,8 @@ class Charts {
             this.chartInstances[config.id].destroy();
         }
 
-        const isExpanded = this.expandedCharts.has(config.id);
+        const isMobile   = window.innerWidth <= 768;
+        const isExpanded = !isMobile || this.expandedCharts.has(config.id);
 
         // Collect and rank labels across all datasets
         const allLabels = [];
@@ -212,8 +213,8 @@ class Charts {
 
         const brokenLabels = displayLabels.map(l => this.breakLabel(l));
         const numDatasets   = chartDatasets.length;
-        const barHeight     = 22;
-        const categoryPad   = 8;
+        const barHeight     = 30;
+        const categoryPad   = 18;
         const perCategory   = (barHeight * numDatasets) + categoryPad;
         const legendPadding = numDatasets > 1 ? 50 : 20;
         const height        = Math.max(200, displayLabels.length * perCategory + legendPadding + 40);
@@ -372,7 +373,10 @@ class Charts {
         const btn = document.getElementById(config.toggleId);
         if (!btn) return;
 
-        if (config.noToggle) {
+        const isMobile = window.innerWidth <= 768;
+
+        // Only show the toggle on mobile; on desktop all categories are always visible
+        if (config.noToggle || !isMobile) {
             btn.style.display = 'none';
             return;
         }
@@ -605,19 +609,26 @@ class Charts {
 
         document.body.appendChild(dialog);
 
-        customElements.whenDefined('sl-dialog').then(() => {
-            dialog.show();
-            dialog.addEventListener('sl-after-show', () => {
-                this.renderDrilldownChart(drilldown, drillDatasets);
-            }, { once: true });
-        });
-
         dialog.addEventListener('sl-after-hide', () => {
             if (this.chartInstances['__drilldown__']) {
                 this.chartInstances['__drilldown__'].destroy();
                 delete this.chartInstances['__drilldown__'];
             }
             dialog.remove();
+        });
+
+        customElements.whenDefined('sl-dialog').then(() => {
+            // Render only once, after the dialog animation finishes and the
+            // canvas has its final dimensions.
+            const renderOnce = () => {
+                if (!this.chartInstances['__drilldown__']) {
+                    this.renderDrilldownChart(drilldown, drillDatasets);
+                }
+            };
+            dialog.addEventListener('sl-after-show', renderOnce, { once: true });
+            // Fallback if sl-after-show doesn't fire (first-load timing issue)
+            setTimeout(renderOnce, 350);
+            dialog.show();
         });
     }
 
@@ -663,8 +674,8 @@ class Charts {
 
         const brokenLabels = allLabels.map(l => this.breakLabel(l));
         const numDatasets  = chartDatasets.length;
-        const barHeight    = 22;
-        const categoryPad  = 8;
+        const barHeight    = 30;
+        const categoryPad  = 18;
         const perCategory  = (barHeight * numDatasets) + categoryPad;
         const legendPad    = numDatasets > 1 ? 50 : 20;
         const height       = Math.max(150, allLabels.length * perCategory + legendPad + 40);
